@@ -1,7 +1,10 @@
 defmodule Huffman.Helpers do
 
   @doc """
-  Given a binary and its encoding, returns a list of codepoints as binaries
+  Returns all codepoints in the string. Optional second argument specifies the
+  encoding (utf8, utf16, utf32), defaulting to `:utf8`.
+
+  ## Examples
 
       iex> Huffman.Helpers.codepoints(<<"boom"::utf8>>, :utf8)
       [<<98>>, <<111>>, <<111>>, <<109>>]
@@ -13,17 +16,53 @@ defmodule Huffman.Helpers do
       [<<0, 0, 0, 98>>, <<0, 0, 0, 111>>, <<0, 0, 0, 111>>, <<0, 0, 0, 109>>]
 
   """
-  def codepoints(binary, encoding) do
-    do_codepoints(binary, encoding, [])
+  def codepoints(binary, encoding\\:utf8)
+  def codepoints(binary, encoding) when is_binary(binary) do
+    do_codepoints(next_codepoint(binary, encoding), encoding)
   end
 
-  defp do_codepoints(<<>>, _encoding, codepoints) do
-    Enum.reverse(codepoints)
+  defp do_codepoints({c, rest}, encoding) do
+    [c|do_codepoints(next_codepoint(rest, encoding), encoding)]
   end
 
-  defp do_codepoints(binary, encoding, codepoints) do
-    {codepoint, rest} = next_binary_codepoint(binary, encoding)
-    do_codepoints(rest, encoding, [codepoint | codepoints])
+  defp do_codepoints(nil, _encoding) do
+    []
+  end
+
+  @doc """
+  Returns the next codepoint in a String. Optional second argument specifies the
+  encoding (utf8, utf16, utf32), defaulting to `:utf8`.
+
+  ## Examples
+
+      iex> Huffman.Helpers.next_codepoint("olá")
+      {"o", "lá"}
+
+      iex> Huffman.Helpers.next_codepoint(<<"olá"::utf16>>, :utf16)
+      {<<0, 111>>, <<0, 108, 0, 225>>}
+
+      iex> Huffman.Helpers.next_codepoint(<<"olá"::utf32>>, :utf32)
+      {<<0, 0, 0, 111>>, <<0, 0, 0, 108, 0, 0, 0, 225>>}
+  """
+  def next_codepoint(bin, encoding\\:utf8)
+  def next_codepoint(<< cp :: utf8, rest :: binary >>, :utf8) do
+    {<<cp :: utf8>>, rest}
+  end
+
+  def next_codepoint(<< cp :: utf16, rest :: binary >>, :utf16) do
+    {<<cp :: utf16>>, rest}
+  end
+
+  def next_codepoint(<< cp :: utf32, rest :: binary >>, :utf32) do
+    {<<cp :: utf32>>, rest}
+  end
+
+  def next_codepoint(<< cp, rest :: binary >>, _encoding) do
+    {<<cp>>, rest}
+  end
+
+  def next_codepoint(<<>>, _encoding) do
+    nil
   end
 
   @doc """
@@ -62,38 +101,6 @@ defmodule Huffman.Helpers do
     Dict.update(frequency_map, binary_codepoint, 1, fn
       (count) -> count + 1
     end)
-  end
-
-  defp next_binary_codepoint(bin, encoding) do
-    {codepoint, rest} = pop_codepoint(bin, encoding)
-    {codepoint_to_binary(codepoint, encoding), rest}
-  end
-
-  defp pop_codepoint(<<codepoint::utf8, rest::binary>>, :utf8) do
-    {codepoint, rest}
-  end
-
-  defp pop_codepoint(<<codepoint::utf16, rest::binary>>, :utf16) do
-    {codepoint, rest}
-  end
-
-  defp pop_codepoint(<<codepoint::utf32, rest::binary>>, :utf32) do
-    {codepoint, rest}
-  end
-
-  defp codepoint_to_binary(key, :utf8) do
-    <<bin_key::binary>> = <<key::utf8>>
-    bin_key
-  end
-
-  defp codepoint_to_binary(key, :utf16) do
-    <<bin_key::binary>> = <<key::utf16>>
-    bin_key
-  end
-
-  defp codepoint_to_binary(key, :utf32) do
-    <<bin_key::binary>> = <<key::utf32>>
-    bin_key
   end
 
   def sort_frequencies({_byte1, count1}, {_byte2, count2}) when count1 < count2,
