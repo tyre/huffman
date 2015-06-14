@@ -9,7 +9,7 @@ that contain a lot of repetition.
 
 Add the following to your mix.exs under deps:
 
-`{:huffman, "~> 1.0"}`
+`{:huffman, "~> 1.1"}`
 
 # Usage
 
