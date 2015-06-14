@@ -34,4 +34,23 @@ defmodule Huffman.Helpers do
     do: true
   def sort_frequencies({byte1, _count1}, {byte2, _count2}) when byte1 > byte2,
     do: false
+
+  def inspect_bits(bits) do
+    bit_string = accumulate_bits(bits)
+      |> Enum.map(fn (bit) -> "#{bit}::1" end)
+      |> Enum.join(", ")
+    "<<#{bit_string}>>"
+  end
+
+  defp accumulate_bits(bits) do
+    accumulate_bits(bits, [])
+  end
+
+  defp accumulate_bits(<<>>, bits) do
+    Enum.reverse bits
+  end
+
+  defp accumulate_bits(<<bit::integer-size(1)-unit(1), rest::bits>>, acc) do
+    accumulate_bits(rest, [inspect(bit) | acc])
+  end
 end
