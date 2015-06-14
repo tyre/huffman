@@ -1,5 +1,6 @@
 defmodule Huffman.Helpers do
 
+  @compile {:inline, do_codepoints: 2, next_codepoint: 2, increment: 2}
   @doc """
   Returns all codepoints in the string. Optional second argument specifies the
   encoding (utf8, utf16, utf32), defaulting to `:utf8`.
