@@ -3,7 +3,7 @@ defmodule Huffman.Mixfile do
 
   def project do
     [app: :huffman,
-     version: "1.0.0",
+     version: "1.1.0",
      elixir: "~> 1.0",
      source_url: "https://github.com/SenecaSystems/huffman",
      description: "Huffman encoding and decoding.",

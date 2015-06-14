@@ -5,7 +5,6 @@ defmodule Huffman.Tree do
 
   defstruct root: nil
 
-
   def new([]) do
     %Tree{}
   end
@@ -141,11 +140,11 @@ defmodule Huffman.Tree do
   """
   def to_string(%Tree{}=tree) do
     internals = reduce(tree, [], fn (node, acc) ->
-      [inspect_bits(node.code) <> " => " <> node.key| acc]
+      code_bits = inspect_bits(node.code)
+      [ "#{code_bits} => #{node.key}" | acc]
     end) |> Enum.join(", ")
     "#Huffman.Tree< #{internals} >"
   end
-
 
   @doc """
     Calls the supplied function for each leaf node.
@@ -193,7 +192,7 @@ defmodule Huffman.Tree do
     }
   end
 
-  def insert(%Tree{root: root}, code, <<key::utf8>>) when is_bitstring(code) do
+  def insert(%Tree{root: root}, code, key) when is_bitstring(code) do
     root = root || %Node{}
     %Tree{root: do_insert(code, code, key, root)}
   end

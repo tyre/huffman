@@ -1,29 +1,99 @@
 defmodule Huffman.Helpers do
+
   @doc """
-  Counts the frequency of bytes in a given binary.
+  Given a binary and its encoding, returns a list of codepoints as binaries
 
-  Returns a list of tuples, the first element is the utf8 code_point and the second
-  is the number of occurences. The list is sorted first by the count, falling
-  back to comparing the bytes themselves.
+      iex> Huffman.Helpers.codepoints(<<"boom"::utf8>>, :utf8)
+      [<<98>>, <<111>>, <<111>>, <<109>>]
 
-      iex> Huffman.Helpers.code_point_frequencies("bobbing")
-      [{"g", 1}, {"i", 1}, {"n", 1}, {"o", 1}, {"b", 3}]
+      iex> Huffman.Helpers.codepoints(<<"boom"::utf16>>, :utf16)
+      [<<0, 98>>, <<0, 111>>, <<0, 111>>, <<0, 109>>]
+
+      iex> Huffman.Helpers.codepoints(<<"boom"::utf32>>, :utf32)
+      [<<0, 0, 0, 98>>, <<0, 0, 0, 111>>, <<0, 0, 0, 111>>, <<0, 0, 0, 109>>]
+
   """
-  def code_point_frequencies(<<bin::binary>>) do
-    code_point_frequencies(bin, %{})
+  def codepoints(binary, encoding) do
+    do_codepoints(binary, encoding, [])
+  end
+
+  defp do_codepoints(<<>>, _encoding, codepoints) do
+    Enum.reverse(codepoints)
+  end
+
+  defp do_codepoints(binary, encoding, codepoints) do
+    {codepoint, rest} = next_binary_codepoint(binary, encoding)
+    do_codepoints(rest, encoding, [codepoint | codepoints])
+  end
+
+  @doc """
+  Counts the frequency of codepoints in a given binary.
+
+  Returns a list of tuples, the first element is the code point and the second
+  is the number of occurences. The list is sorted first by the count, falling
+  back to comparing the codepoints themselves.
+
+      iex> Huffman.Helpers.binary_frequencies("bobbing")
+      [{"g", 1}, {"i", 1}, {"n", 1}, {"o", 1}, {"b", 3}]
+
+  Defaults to utf8 but the optional second parameter can also be set to `:utf16`
+  or `:utf32`
+  """
+  def binary_frequencies(bin, encoding\\:utf8)
+  def binary_frequencies(bin, encoding) do
+    do_binary_frequencies(bin, encoding)
     |> Enum.to_list
     |> Enum.sort(&sort_frequencies/2)
   end
 
-  defp code_point_frequencies(<<>>, frequency_map) do
+  defp do_binary_frequencies(bin, encoding) when is_binary(bin) and is_atom(encoding) do
+    count_frequencies(codepoints(bin, encoding), %{})
+  end
+
+  defp count_frequencies([], frequency_map) do
     frequency_map
   end
 
-  defp code_point_frequencies(<<byte::utf8, rest::binary>>, frequency_map) do
-    new_frequency_map = Dict.update(frequency_map, byte, 1, fn
+  defp count_frequencies([head|tail], frequency_map) do
+    count_frequencies(tail, increment(frequency_map, head))
+  end
+
+  defp increment(frequency_map, binary_codepoint) do
+    Dict.update(frequency_map, binary_codepoint, 1, fn
       (count) -> count + 1
     end)
-    code_point_frequencies(rest, new_frequency_map)
+  end
+
+  defp next_binary_codepoint(bin, encoding) do
+    {codepoint, rest} = pop_codepoint(bin, encoding)
+    {codepoint_to_binary(codepoint, encoding), rest}
+  end
+
+  defp pop_codepoint(<<codepoint::utf8, rest::binary>>, :utf8) do
+    {codepoint, rest}
+  end
+
+  defp pop_codepoint(<<codepoint::utf16, rest::binary>>, :utf16) do
+    {codepoint, rest}
+  end
+
+  defp pop_codepoint(<<codepoint::utf32, rest::binary>>, :utf32) do
+    {codepoint, rest}
+  end
+
+  defp codepoint_to_binary(key, :utf8) do
+    <<bin_key::binary>> = <<key::utf8>>
+    bin_key
+  end
+
+  defp codepoint_to_binary(key, :utf16) do
+    <<bin_key::binary>> = <<key::utf16>>
+    bin_key
+  end
+
+  defp codepoint_to_binary(key, :utf32) do
+    <<bin_key::binary>> = <<key::utf32>>
+    bin_key
   end
 
   def sort_frequencies({_byte1, count1}, {_byte2, count2}) when count1 < count2,

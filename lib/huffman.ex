@@ -19,29 +19,44 @@ defmodule Huffman do
     <<19::size(5)>> => "n", <<10::size(4)>> => "t", <<11::size(4)>> => "a",
     <<6::size(3)>> => "e", <<7::size(3)>> => " "}
 
-  It encodes based on utf8 code points:
+  It encodes based on utf8 codepoints by default:
 
       iex> Huffman.encode("ƒøßª™º£:")
       {<<159, 10, 90>>,
-      %{<<0::size(3)>> => 170, <<1::size(3)>> => 186, <<2::size(3)>> => 58,
-        <<3::size(3)>> => 163, <<4::size(3)>> => 402, <<5::size(3)>> => 8482,
-         <<6::size(3)>> => 223, <<7::size(3)>> => 248}}
+      %{<<0::size(3)>> => "ª", <<1::size(3)>> => "º", <<2::size(3)>> => ":", <<3::size(3)>> => "£", <<4::size(3)>> => "ƒ",
+        <<5::size(3)>> => "™", <<6::size(3)>> => "ß", <<7::size(3)>> => "ø"}}
+
+  But you can also specify utf16 or utf32:
+
+      iex> Huffman.encode(<<"bananas"::utf16>>, :utf16)
+      {<<141, 21::size(5)>>,
+       %{<<0::size(1)>> => <<0, 97>>, <<4::size(3)>> => <<0, 98>>,
+         <<5::size(3)>> => <<0, 115>>, <<3::size(2)>> => <<0, 110>>}}
+
+      iex> Huffman.encode(<<"bananas"::utf32>>, :utf32)
+      {<<141, 21::size(5)>>,
+      %{<<0::size(1)>> => <<0, 0, 0, 97>>, <<4::size(3)>> => <<0, 0, 0, 98>>,
+      <<5::size(3)>> => <<0, 0, 0, 115>>, <<3::size(2)>> => <<0, 0, 0, 110>>}}
+
+
   """
-  def encode(bin) do
-    tree = Tree.new(code_point_frequencies(bin))
-    encoded = do_encode(bin, Tree.to_map(tree, :keys))
+  def encode(bin, encoding\\:utf8)
+  def encode(bin, encoding) do
+    tree = Tree.new(binary_frequencies(bin, encoding))
+    keys_to_codes = Tree.to_map(tree, :keys)
+    encoded = encode_codepoints(codepoints(bin, encoding), keys_to_codes)
     {encoded, Tree.to_map(tree, :codes)}
   end
 
-    defp do_encode(bin, keys) when is_map(keys) and is_binary(bin) do
-      do_encode(bin, keys, <<>>)
+    defp encode_codepoints(codepoints, keys) do
+      encode_codepoints(codepoints, keys, <<>>)
     end
 
-    defp do_encode(<<>>, _keys, encoded), do: encoded
+    defp encode_codepoints([], _keys, encoded), do: encoded
 
-    defp do_encode(<<byte::utf8, rest::binary>>, keys, encoded) do
-      encoded_byte = Map.get(keys, byte)
-      do_encode(rest, keys, <<encoded::bits, encoded_byte::bits>>)
+    defp encode_codepoints([codepoint | tail], keys, encoded) do
+      encoded_byte = Map.get(keys, codepoint)
+      encode_codepoints(tail, keys, <<encoded::bits, encoded_byte::bits>>)
     end
 
   @doc """
@@ -51,6 +66,13 @@ defmodule Huffman do
       iex> {encoded, keys} = Huffman.encode "Lil Wayne is the best rapper alive."
       iex> Huffman.decode encoded, keys
       "Lil Wayne is the best rapper alive."
+
+  Note that decoding will return the same utf encoding as what `Huffman.encode`
+  was given:
+
+      iex> {encoded, keys} = Huffman.encode(<<"bananas"::utf32>>, :utf32)
+      iex> Huffman.decode(encoded, keys)
+      <<0, 0, 0, 98, 0, 0, 0, 97, 0, 0, 0, 110, 0, 0, 0, 97, 0, 0, 0, 110, 0, 0, 0, 97, 0, 0, 0, 115>>
   """
   def decode(encoded, keys) do
     do_decode(encoded, keys)

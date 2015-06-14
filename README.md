@@ -21,6 +21,15 @@ Huffman.decode encoded, keys
 # returns "Lil Wayne is the best rapper alive."
 ```
 
+The encode function takes a second optional argument in case the input is utf16
+or utf32. Decode returns whatever encoding it was given.
+
+```elixir
+{encoded, keys} = Huffman.encode(<<"bananas"::utf32>>, :utf32)
+Huffman.decode(encoded, keys)
+# returns <<0, 0, 0, 98, 0, 0, 0, 97, 0, 0, 0, 110, 0, 0, 0, 97, 0, 0, 0, 110, 0, 0, 0, 97, 0, 0, 0, 115>>
+```
+
 ## Internals
 
 In case you care!
