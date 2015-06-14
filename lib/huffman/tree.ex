@@ -193,7 +193,7 @@ defmodule Huffman.Tree do
     }
   end
 
-  def insert(%Tree{root: root}, code, <<key::binary-size(1)>>) when is_bitstring(code) do
+  def insert(%Tree{root: root}, code, <<key::utf8>>) when is_bitstring(code) do
     root = root || %Node{}
     %Tree{root: do_insert(code, code, key, root)}
   end
