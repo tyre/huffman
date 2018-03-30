@@ -99,7 +99,7 @@ defmodule Huffman.Helpers do
   end
 
   defp increment(frequency_map, binary_codepoint) do
-    Dict.update(frequency_map, binary_codepoint, 1, fn
+    Map.update(frequency_map, binary_codepoint, 1, fn
       (count) -> count + 1
     end)
   end

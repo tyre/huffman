@@ -3,14 +3,14 @@ defmodule Huffman.Mixfile do
 
   def project do
     [app: :huffman,
-     version: "1.1.1",
-     elixir: "~> 1.0",
+     version: "1.2.0",
+     elixir: "~> 1.6",
      source_url: "https://github.com/SenecaSystems/huffman",
      description: "Huffman encoding and decoding.",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps,
-     package: package]
+     deps: deps(),
+     package: package()]
   end
 
   def application do
@@ -28,8 +28,7 @@ defmodule Huffman.Mixfile do
 
   defp deps do
     [
-      {:earmark, "~> 0.1", only: :dev},
-      {:ex_doc, "~> 0.7", only: :dev}
+      {:ex_doc, "~> 0.16", only: :dev, runtime: false}
     ]
   end
 end
