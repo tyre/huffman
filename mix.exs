@@ -11,8 +11,7 @@ defmodule Huffman.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       deps: deps(),
-      package: package(),
-      maintainers: maintainers()
+      package: package()
     ]
   end
 
@@ -24,8 +23,9 @@ defmodule Huffman.Mixfile do
     [
       files: ["lib", "mix.exs", "README.md", "LICENSE"],
       contributors: ["Seneca Systems"],
+      maintainers: maintainers(),
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/SenecaSystems/huffman"}
+      links: %{"GitHub" => "https://github.com/tyre/huffman"}
     ]
   end
 
